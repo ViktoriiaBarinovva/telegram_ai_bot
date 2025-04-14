@@ -69,19 +69,22 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     else:
         await update.message.reply_text("Сначала выбери одну из категорий, чтобы начать.")
 
-# Запрос к OpenAI
+# Запрос к OpenAI (асинхронный с Chat API)
 async def get_openai_response(user_message: str) -> str:
     try:
-        response = openai.Completion.create(
-            engine="text-davinci-003",
-            prompt=user_message,
-            max_tokens=150,
+        response = await openai.ChatCompletion.acreate(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "Ты — полезный помощник по карьерному развитию."},
+                {"role": "user", "content": user_message}
+            ],
             temperature=0.7,
+            max_tokens=500,
         )
-        return response.choices[0].text.strip()
+        return response.choices[0].message['content'].strip()
     except Exception as e:
         logger.error(f"Ошибка при запросе к OpenAI: {e}")
-        return "Произошла ошибка при обработке запроса."
+        return "Произошла ошибка при обработке запроса. Попробуйте позже."
 
 # Запуск бота
 def main() -> None:
