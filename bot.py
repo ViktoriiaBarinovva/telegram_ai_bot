@@ -25,7 +25,7 @@ if not TELEGRAM_BOT_TOKEN or not OPENAI_API_KEY or not WEBHOOK_URL:
 
 openai.api_key = OPENAI_API_KEY
 
-# Настройка логирования
+# Логирование
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
@@ -62,10 +62,10 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     text = category_texts.get(category, "Неверная категория.")
     await query.edit_message_text(text=text)
 
-# Обработка пользовательских сообщений
+# Обработка сообщений
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not update.message:
-        return  # игнорировать пустые обновления
+        return
 
     user_message = update.message.text
     category = context.user_data.get('category')
@@ -76,7 +76,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     else:
         await update.message.reply_text("Сначала выбери одну из категорий, чтобы начать.")
 
-# Обращение к OpenAI API
+# Запрос к OpenAI
 async def get_openai_response(user_message: str) -> str:
     try:
         response = await openai.ChatCompletion.acreate(
@@ -93,7 +93,7 @@ async def get_openai_response(user_message: str) -> str:
         logger.error(f"Ошибка при запросе к OpenAI: {e}")
         return "Произошла ошибка при обработке запроса. Попробуйте позже."
 
-# Запуск бота с webhook
+# Запуск
 async def main() -> None:
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 
@@ -102,16 +102,21 @@ async def main() -> None:
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
     try:
-        # Устанавливаем Webhook
-        await application.bot.set_webhook(url=WEBHOOK_URL)
+        # Установка webhook
+        webhook_path = "webhook"
+        full_webhook_url = f"{WEBHOOK_URL}/{webhook_path}"
 
-        logger.info(f"Запуск webhook на порту {PORT}, URL: {WEBHOOK_URL}")
+        await application.bot.set_webhook(url=full_webhook_url)
+        logger.info(f"Webhook установлен по адресу: {full_webhook_url}")
+
+        # Запуск webhook-сервера
         await application.run_webhook(
             listen="0.0.0.0",
             port=PORT,
-            url_path="",
-            webhook_url=WEBHOOK_URL,
+            url_path=webhook_path,
+            webhook_url=full_webhook_url,
         )
+
     except Exception as e:
         logger.error(f"Ошибка при запуске webhook: {e}")
 
