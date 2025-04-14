@@ -90,7 +90,7 @@ async def get_openai_response(user_message: str) -> str:
         return "Произошла ошибка при обработке запроса. Попробуйте позже."
 
 # Запуск бота с webhook
-def main() -> None:
+async def main() -> None:
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 
     application.add_handler(CommandHandler("start", start))
@@ -98,14 +98,15 @@ def main() -> None:
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
     # Устанавливаем Webhook
-    application.bot.set_webhook(url=WEBHOOK_URL)
+    await application.bot.set_webhook(url=WEBHOOK_URL)
 
     # Запуск приложения
-    application.run_webhook(
+    await application.run_webhook(
         listen="0.0.0.0",  # Услушиваем все IP-адреса
         port=PORT,  # Порт, на котором будет работать сервер
         webhook_url=WEBHOOK_URL  # URL для webhook
     )
 
 if __name__ == '__main__':
-    main()
+    import asyncio
+    asyncio.run(main())
