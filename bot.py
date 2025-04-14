@@ -17,7 +17,7 @@ load_dotenv()
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # Пример: https://your-app.onrender.com/webhook
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # Пример: https://telegram-ai-bot-g2j0.onrender.com/webhook
 PORT = int(os.environ.get("PORT", 8443))  # Render передаёт порт в переменной PORT
 
 openai.api_key = OPENAI_API_KEY
@@ -97,12 +97,14 @@ def main() -> None:
     application.add_handler(CallbackQueryHandler(button))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    # Webhook-запуск с указанием пути
+    # Устанавливаем Webhook
+    application.bot.set_webhook(url=WEBHOOK_URL)
+
+    # Запуск приложения
     application.run_webhook(
-        listen="0.0.0.0",
-        port=PORT,
-        webhook_url=WEBHOOK_URL,
-        webhook_path="/webhook",  # обязательно, иначе Telegram не поймёт путь
+        listen="0.0.0.0",  # Услушиваем все IP-адреса
+        port=PORT,  # Порт, на котором будет работать сервер
+        webhook_url=WEBHOOK_URL  # URL для webhook
     )
 
 if __name__ == '__main__':
