@@ -111,6 +111,10 @@ async def main() -> None:
     except Exception as e:
         logger.error(f"Ошибка при настройке webhook: {e}")
 
+# Для запуска в асинхронной среде
 if __name__ == '__main__':
     import asyncio
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except RuntimeError as e:
+        logger.error(f"Ошибка при запуске: {e}")
