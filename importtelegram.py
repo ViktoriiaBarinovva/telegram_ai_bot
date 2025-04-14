@@ -1,13 +1,24 @@
 import telegram
+import os
 import asyncio
+from dotenv import load_dotenv
+
+# Загрузка переменных окружения
+load_dotenv()
+
+# Загрузка токена
+BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 
 async def delete_webhook():
-    bot_token = '7503926130:AAHLSjE9pDUeI-FUNvs_azJSYhulUAz-p5c'  # замените на ваш токен
-    bot = telegram.Bot(token=bot_token)
+    bot = telegram.Bot(token=BOT_TOKEN)
     
-    # Удаляем старый вебхук, если он был настроен
-    await bot.delete_webhook()
-    print("Вебхук удален!")
+    try:
+        # Удаляем старый вебхук, если он был настроен
+        await bot.delete_webhook()
+        print("Вебхук удален!")
+    except Exception as e:
+        print(f"Ошибка при удалении вебхука: {e}")
 
 # Запуск асинхронной функции
-asyncio.run(delete_webhook())
+if __name__ == '__main__':
+    asyncio.run(delete_webhook())
