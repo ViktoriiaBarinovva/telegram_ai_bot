@@ -97,11 +97,12 @@ def main() -> None:
     application.add_handler(CallbackQueryHandler(button))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    # Webhook-запуск
+    # Webhook-запуск с указанием пути
     application.run_webhook(
         listen="0.0.0.0",
         port=PORT,
         webhook_url=WEBHOOK_URL,
+        webhook_path="/webhook",  # обязательно, иначе Telegram не поймёт путь
     )
 
 if __name__ == '__main__':
