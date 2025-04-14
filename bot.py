@@ -103,11 +103,8 @@ async def main() -> None:
 
         # Запуск приложения с обработкой webhook
         logger.info(f"Starting webhook at {WEBHOOK_URL}")
-        await application.run_webhook(
-            listen="0.0.0.0",  # Услушиваем все IP-адреса
-            port=PORT,  # Порт, на котором будет работать сервер
-            webhook_url=WEBHOOK_URL  # URL для webhook
-        )
+        # Запуск webhook с асинхронной обработкой
+        await application.run_polling(allowed_updates=Update.ALL_TYPES)
     except Exception as e:
         logger.error(f"Ошибка при настройке webhook: {e}")
 
