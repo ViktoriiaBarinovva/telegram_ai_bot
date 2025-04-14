@@ -97,15 +97,19 @@ async def main() -> None:
     application.add_handler(CallbackQueryHandler(button))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    # Устанавливаем Webhook
-    await application.bot.set_webhook(url=WEBHOOK_URL)
+    try:
+        # Устанавливаем Webhook
+        await application.bot.set_webhook(url=WEBHOOK_URL)
 
-    # Запуск приложения
-    await application.run_webhook(
-        listen="0.0.0.0",  # Услушиваем все IP-адреса
-        port=PORT,  # Порт, на котором будет работать сервер
-        webhook_url=WEBHOOK_URL  # URL для webhook
-    )
+        # Запуск приложения с обработкой webhook
+        logger.info(f"Starting webhook at {WEBHOOK_URL}")
+        await application.run_webhook(
+            listen="0.0.0.0",  # Услушиваем все IP-адреса
+            port=PORT,  # Порт, на котором будет работать сервер
+            webhook_url=WEBHOOK_URL  # URL для webhook
+        )
+    except Exception as e:
+        logger.error(f"Ошибка при настройке webhook: {e}")
 
 if __name__ == '__main__':
     import asyncio
