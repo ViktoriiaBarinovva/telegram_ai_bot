@@ -17,8 +17,8 @@ load_dotenv()
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # Пример: https://telegram-ai-bot-g2j0.onrender.com/webhook
-PORT = int(os.environ.get("PORT", 8443))  # Render передаёт порт в переменной PORT
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")  
+PORT = int(os.environ.get("PORT", 8443))  
 
 openai.api_key = OPENAI_API_KEY
 
