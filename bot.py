@@ -12,14 +12,17 @@ from telegram.ext import (
     filters,
 )
 
-# Загружаем переменные окружения
+# Загрузка переменных окружения
 load_dotenv()
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # Пример: https://your-app.onrender.com/webhook
+PORT = int(os.environ.get("PORT", 8443))  # Render передаёт порт в переменной PORT
+
 openai.api_key = OPENAI_API_KEY
 
-# Логирование
+# Настройка логирования
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
@@ -39,7 +42,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         reply_markup=reply_markup
     )
 
-# Обработка нажатий на кнопки
+# Обработка кнопок
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     await query.answer()
@@ -58,7 +61,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     await query.edit_message_text(text=text)
 
-# Обработка текстовых сообщений
+# Обработка сообщений
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_message = update.message.text
     category = context.user_data.get('category')
@@ -69,7 +72,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     else:
         await update.message.reply_text("Сначала выбери одну из категорий, чтобы начать.")
 
-# Запрос к OpenAI (асинхронный с Chat API)
+# Запрос к OpenAI
 async def get_openai_response(user_message: str) -> str:
     try:
         response = await openai.ChatCompletion.acreate(
@@ -86,7 +89,7 @@ async def get_openai_response(user_message: str) -> str:
         logger.error(f"Ошибка при запросе к OpenAI: {e}")
         return "Произошла ошибка при обработке запроса. Попробуйте позже."
 
-# Запуск бота
+# Запуск бота с webhook
 def main() -> None:
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 
@@ -94,7 +97,12 @@ def main() -> None:
     application.add_handler(CallbackQueryHandler(button))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    application.run_polling()
+    # Webhook-запуск
+    application.run_webhook(
+        listen="0.0.0.0",
+        port=PORT,
+        webhook_url=WEBHOOK_URL,
+    )
 
 if __name__ == '__main__':
     main()
