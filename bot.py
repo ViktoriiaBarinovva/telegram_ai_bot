@@ -17,8 +17,11 @@ load_dotenv()
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-WEBHOOK_URL = os.getenv("WEBHOOK_URL")  
-PORT = int(os.environ.get("PORT", 8443))  
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")
+PORT = int(os.environ.get("PORT", 8443))
+
+if not TELEGRAM_BOT_TOKEN or not OPENAI_API_KEY or not WEBHOOK_URL:
+    raise EnvironmentError("Отсутствуют необходимые переменные окружения.")
 
 openai.api_key = OPENAI_API_KEY
 
@@ -38,7 +41,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(
-        'Привет! Я твой личный помощник по развитию твоих навыков и продвижению в карьере.\nВыбери одну из категорий:',
+        'Привет! Я твой личный помощник по развитию навыков и карьеры.\nВыбери одну из категорий:',
         reply_markup=reply_markup
     )
 
@@ -50,19 +53,20 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     category = query.data
     context.user_data['category'] = category
 
-    if category == 'education':
-        text = "Вы выбрали: Образование и саморазвитие\nПишите свой вопрос!"
-    elif category == 'interview':
-        text = "Вы выбрали: Подготовка к собеседованиям\nПишите свой вопрос!"
-    elif category == 'resume':
-        text = "Вы выбрали: Конструктор резюме\nПишите свой вопрос!"
-    else:
-        text = "Неверная категория."
+    category_texts = {
+        'education': "Вы выбрали: Образование и саморазвитие\nПишите свой вопрос!",
+        'interview': "Вы выбрали: Подготовка к собеседованиям\nПишите свой вопрос!",
+        'resume': "Вы выбрали: Конструктор резюме\nПишите свой вопрос!",
+    }
 
+    text = category_texts.get(category, "Неверная категория.")
     await query.edit_message_text(text=text)
 
-# Обработка сообщений
+# Обработка пользовательских сообщений
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not update.message:
+        return  # игнорировать пустые обновления
+
     user_message = update.message.text
     category = context.user_data.get('category')
 
@@ -72,7 +76,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     else:
         await update.message.reply_text("Сначала выбери одну из категорий, чтобы начать.")
 
-# Запрос к OpenAI
+# Обращение к OpenAI API
 async def get_openai_response(user_message: str) -> str:
     try:
         response = await openai.ChatCompletion.acreate(
@@ -101,14 +105,16 @@ async def main() -> None:
         # Устанавливаем Webhook
         await application.bot.set_webhook(url=WEBHOOK_URL)
 
-        # Запуск приложения с обработкой webhook
-        logger.info(f"Starting webhook at {WEBHOOK_URL}")
-        # Запуск webhook с асинхронной обработкой
-        await application.run_polling(allowed_updates=Update.ALL_TYPES)
+        logger.info(f"Запуск webhook на порту {PORT}, URL: {WEBHOOK_URL}")
+        await application.run_webhook(
+            listen="0.0.0.0",
+            port=PORT,
+            url_path="",
+            webhook_url=WEBHOOK_URL,
+        )
     except Exception as e:
-        logger.error(f"Ошибка при настройке webhook: {e}")
+        logger.error(f"Ошибка при запуске webhook: {e}")
 
-# Для запуска в асинхронной среде
 if __name__ == '__main__':
     import asyncio
     try:
